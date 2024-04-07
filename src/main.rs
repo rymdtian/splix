@@ -29,6 +29,14 @@ fn main() {
     let cols = cli.cols;
     let grid = cli.grid;
 
+    let image_reader = match ImageReader::open(&image_path) {
+        Ok(reader) => reader,
+        Err(_error) => {
+            println!("Error: The provided file '{}' is not a valid image.", image_path.display());
+            return;
+        }
+    };
+
     if grid.is_none() && rows.is_none() && cols.is_none() {
         return;
     }
@@ -37,3 +45,4 @@ fn main() {
         println!("'grid' specified so ignoring 'rows' and 'cols'");
     }
 }
+
