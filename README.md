@@ -1,0 +1,3 @@
+# Splix
+
+Splix is a command-line tool written in Rust for splitting images into multiple images based on specified rows, columns, or a custom grid. It offers a simple and efficient way to break down images into smaller components, facilitating various image processing tasks.
