@@ -16,10 +16,6 @@ struct Cli {
     /// Number of columns
     #[arg(short, long)]
     cols: Option<u32>,
-
-    /// Custom grid string 
-    #[arg(short, long)]
-    grid: Option<String>,
 }
 
 fn main() {
@@ -27,7 +23,6 @@ fn main() {
     let image_path = cli.image;
     let rows = cli.rows;
     let cols = cli.cols;
-    let grid = cli.grid;
 
     // Validate image
     let img = match image::open(&image_path) {
@@ -53,8 +48,8 @@ fn main() {
         }
     }
 
-    if grid.is_none() && rows.is_none() && cols.is_none() {
-        eprintln!("splix: At least one of '--rows', '--cols', '--grid' need to be specified.");
+    if rows.is_none() && cols.is_none() {
+        eprintln!("splix: At least one of '--rows', '--cols' needs to be specified.");
         return;
     }
 }
