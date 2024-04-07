@@ -1,6 +1,7 @@
 use std::path::PathBuf;
+use std::error::Error;
 use clap::Parser;
-use image::io::Reader as ImageReader;
+use image;
 
 #[derive(Parser)]
 struct Cli {
@@ -23,26 +24,38 @@ struct Cli {
 
 fn main() {
     let cli = Cli::parse();
-
     let image_path = cli.image;
     let rows = cli.rows;
     let cols = cli.cols;
     let grid = cli.grid;
 
-    let image_reader = match ImageReader::open(&image_path) {
-        Ok(reader) => reader,
-        Err(_error) => {
-            println!("Error: The provided file '{}' is not a valid image.", image_path.display());
+    // Validate image
+    let img = match image::open(&image_path) {
+        Ok(img) => img,
+        Err(_) => {
+            eprintln!("splix: image: The provided file '{}' is not a valid image", image_path.display());
             return;
         }
     };
 
-    if grid.is_none() && rows.is_none() && cols.is_none() {
-        return;
+    // Validate user input
+    if let Some(rows) = rows {
+        if rows == 0 {
+            eprintln!("splix: rows: Must be a positive integer");
+            return;
+        }
+    }
+    
+    if let Some(cols) = cols {
+        if cols == 0 {
+            eprintln!("splix: cols: Must be a positive integer");
+            return;
+        }
     }
 
-    if grid.is_some() && (rows.is_some() && cols.is_some()) {
-        println!("'grid' specified so ignoring 'rows' and 'cols'");
+    if grid.is_none() && rows.is_none() && cols.is_none() {
+        eprintln!("splix: At least one of '--rows', '--cols', '--grid' need to be specified.");
+        return;
     }
 }
 
