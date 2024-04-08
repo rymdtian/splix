@@ -1,6 +1,5 @@
 use clap::Parser;
 use image::*;
-use std::cmp;
 use std::fs;
 use std::path::PathBuf;
 
@@ -59,41 +58,30 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
 
 fn split_image(img_path: &PathBuf, rows: u32, cols: u32) -> Vec<DynamicImage> {
     let mut img = image::open(img_path).unwrap();
-    let mut split_images: Vec<DynamicImage> = Vec::new();
+    let mut split_images = Vec::new();
     let (width, height) = img.dimensions();
 
     let rows = rows.clamp(1, height);
     let cols = cols.clamp(1, width);
 
+    let row_height = height / rows;
+    let col_width = width / cols;
+
     for i in 0..rows {
-        split_images.push(img.crop(
-            0,
-            height / rows * i,
-            width,
-            cmp::max(
-                height / rows * (i + 1) - height / rows * i,
-                height - height / rows * i,
-            ),
-        ));
-    }
+        let y = row_height * i;
+        let crop_height = if i == rows - 1 {
+            height - y
+        } else {
+            row_height
+        };
 
-    for i in 0..split_images.len() {
-        let mut split_image = split_images[i].clone();
         for j in 0..cols {
-            split_images.push(split_image.crop(
-                width / cols * j,
-                height / rows * i as u32,
-                cmp::max(
-                    width / cols * (j + 1) - width / cols * j,
-                    width - width / cols * j,
-                ),
-                split_image.height(),
-            ));
-        }
-    }
+            let x = col_width * j;
+            let crop_width = if j == cols - 1 { width - x } else { col_width };
 
-    if cols > 0 {
-        split_images.drain(0..rows as usize);
+            let sub_img = img.crop(x, y, crop_width, crop_height);
+            split_images.push(sub_img);
+        }
     }
 
     split_images
