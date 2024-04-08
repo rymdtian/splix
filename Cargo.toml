@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Raymond Tian rymdtian@gmail.com"]
 license = "MIT"
-description = "Splix is a command-line tool written in Rust for splitting images into multiple images based on specified rows, columns, or a custom grid. It offers a simple and efficient way to break down images into smaller components, facilitating various image processing tasks."
+description = "Split images into grids of rows and columns."
 readme = "README.md"
-homepage = "github.com/raymondytian/splix"
-repository = "github.com/raymondytian/splix"
+homepage = "https://github.com/raymondytian/splix"
+repository = "https://github.com/raymondytian/splix"
 keywords = ["cli", "image", "split"]
 categories = ["command-line-utilities"]
 
