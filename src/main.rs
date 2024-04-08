@@ -45,19 +45,6 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
         ));
     }
 
-    // Validate user input
-    if let Some(rows) = rows {
-        if rows == 0 {
-            return Err("splix: rows: Must be a positive integer".to_string());
-        }
-    }
-
-    if let Some(cols) = cols {
-        if cols == 0 {
-            return Err("splix: cols: Must be a positive integer".to_string());
-        }
-    }
-
     if rows.is_none() && cols.is_none() {
         return Err("splix: At least one of '--rows', '--cols' needs to be specified.".to_string());
     }
@@ -65,13 +52,15 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
     Ok(())
 }
 
-fn split_image(img_path: &PathBuf, rows: u32, cols: u32) -> Vec<DynamicImage> {
+fn split_image(img_path: &PathBuf, mut rows: u32, mut cols: u32) -> Vec<DynamicImage> {
     let mut img = image::open(img_path).unwrap();
     let mut split_images: Vec<DynamicImage> = Vec::new();
     let (width, height) = img.dimensions();
 
-    let rows = rows.min(height);
-    let cols = cols.min(width);
+    rows = rows.max(1);
+    cols = cols.max(1);
+    rows = rows.min(height);
+    cols = cols.min(width);
 
     for i in 0..rows {
         split_images.push(img.crop(
