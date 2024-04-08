@@ -148,6 +148,7 @@ fn main() {
 
     if let Err(err) = validate_args(&cli) {
         eprintln!("{}", err);
+        return;
     }
 
     let img_path = cli.image;
