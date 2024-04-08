@@ -1,6 +1,7 @@
 use clap::Parser;
 use image::*;
 use std::cmp;
+use std::fs;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -28,8 +29,12 @@ fn main() {
     let img_path = cli.image;
     let rows = cli.rows.unwrap_or(1);
     let cols = cli.cols.unwrap_or(1);
+    let save_directory = "split_images"; // TODO: turn to user argument
 
-    split_image(&img_path, rows, cols);
+    let split_images = split_image(&img_path, rows, cols);
+    let img_format = io::Reader::open(&img_path).unwrap().format().unwrap();
+    let img_format_str = img_format.extensions_str()[0];
+    save_images(&split_images, save_directory, &img_format, img_format_str);
 }
 
 fn validate_args(cli: &Cli) -> Result<(), String> {
@@ -92,6 +97,37 @@ fn split_image(img_path: &PathBuf, rows: u32, cols: u32) -> Vec<DynamicImage> {
     }
 
     split_images
+}
+
+fn save_images(
+    split_images: &Vec<DynamicImage>,
+    save_directory_str: &str,
+    img_format: &ImageFormat,
+    img_format_str: &str,
+) {
+    let mut split_image_path = PathBuf::from(save_directory_str);
+    if let Err(err) = fs::create_dir_all(&split_image_path) {
+        eprintln!(
+            "splix: Failed to create directory {}: {}",
+            save_directory_str, err
+        );
+    }
+    split_image_path.push("placeholder_filename");
+
+    for i in 0..split_images.len() {
+        split_image_path.set_file_name(format!("{}.{}", i, img_format_str));
+
+        if split_image_path.exists() {
+            if let Err(err) = fs::remove_file(&split_image_path) {
+                eprintln!("Failed to remove existing image {}: {}", i, err);
+                continue; // Skip saving this image if removing the existing one fails
+            }
+        }
+
+        if let Err(err) = split_images[i].save_with_format(&split_image_path, *img_format) {
+            eprintln!("splix: Failed to save image #{}: {}", i, err);
+        }
+    }
 }
 
 #[cfg(test)]
