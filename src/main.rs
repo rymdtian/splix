@@ -1,6 +1,6 @@
-use std::path::PathBuf;
 use clap::Parser;
 use image;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 struct Cli {
@@ -17,39 +17,43 @@ struct Cli {
     cols: Option<u32>,
 }
 
-fn main() {
-    let cli = Cli::parse();
-    let image_path = cli.image;
+fn validate_args(cli: &Cli) -> Result<(), String> {
+    let image_path = cli.image.clone();
     let rows = cli.rows;
     let cols = cli.cols;
 
     // Validate image
-    let img = match image::open(&image_path) {
-        Ok(img) => img,
-        Err(_) => {
-            eprintln!("splix: image: The provided file '{}' is not a valid image", image_path.display());
-            return;
-        }
-    };
+    if let Err(_) = image::open(&image_path) {
+        return Err(format!(
+            "splix: image: The provided file '{}' is not a valid image",
+            image_path.display()
+        ));
+    }
 
     // Validate user input
     if let Some(rows) = rows {
         if rows == 0 {
-            eprintln!("splix: rows: Must be a positive integer");
-            return;
+            return Err("splix: rows: Must be a positive integer".to_string());
         }
     }
-    
+
     if let Some(cols) = cols {
         if cols == 0 {
-            eprintln!("splix: cols: Must be a positive integer");
-            return;
+            return Err("splix: cols: Must be a positive integer".to_string());
         }
     }
 
     if rows.is_none() && cols.is_none() {
-        eprintln!("splix: At least one of '--rows', '--cols' needs to be specified.");
-        return;
+        return Err("splix: At least one of '--rows', '--cols' needs to be specified.".to_string());
     }
+
+    Ok(())
 }
 
+fn main() {
+    let cli = Cli::parse();
+
+    if let Err(err) = validate_args(&cli) {
+        eprintln!("{}", err);
+    }
+}
