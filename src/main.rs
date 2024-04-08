@@ -52,15 +52,13 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
     Ok(())
 }
 
-fn split_image(img_path: &PathBuf, mut rows: u32, mut cols: u32) -> Vec<DynamicImage> {
+fn split_image(img_path: &PathBuf, rows: u32, cols: u32) -> Vec<DynamicImage> {
     let mut img = image::open(img_path).unwrap();
     let mut split_images: Vec<DynamicImage> = Vec::new();
     let (width, height) = img.dimensions();
 
-    rows = rows.max(1);
-    cols = cols.max(1);
-    rows = rows.min(height);
-    cols = cols.min(width);
+    let rows = rows.clamp(1, height);
+    let cols = cols.clamp(1, width);
 
     for i in 0..rows {
         split_images.push(img.crop(
