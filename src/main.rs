@@ -184,14 +184,13 @@ fn split_image(mut img: DynamicImage, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<D
 /// * `num_cols` _ Number of columns the image was split into.
 fn save_images(
     split_images: &Vec<DynamicImage>,
-    output_directory: &PathBuf,
+    output_directory: &mut PathBuf,
     img_file_name: &str,
     img_format: &ImageFormat,
     img_format_str: &str,
     num_rows: usize,
     num_cols: usize,
 ) {
-    let mut output_directory = output_directory.clone();
     if !output_directory.exists() {
         if let Err(err) = fs::create_dir_all(&output_directory) {
             eprintln!(
@@ -234,7 +233,7 @@ fn main() {
     let img_dir = cli.images;
     let rows = cli.rows.unwrap_or(vec![1]);
     let cols = cli.cols.unwrap_or(vec![1]);
-    let output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
+    let mut output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
     let entries = if cli.recursive {
         WalkDir::new(&img_dir)
     } else {
@@ -251,7 +250,7 @@ fn main() {
                     let img_format_str = img_format.extensions_str()[0];
                     save_images(
                         &split_images,
-                        &output_directory,
+                        &mut output_directory,
                         img_file_name,
                         img_format,
                         img_format_str,
