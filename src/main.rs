@@ -1,7 +1,7 @@
 use clap::Parser;
 use image::*;
 use std::path::PathBuf;
-use std::{fs, process, vec};
+use std::{fs, cmp, vec};
 use walkdir::WalkDir;
 
 /// Command-line arguments for splix.
