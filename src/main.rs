@@ -124,11 +124,14 @@ fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<Dynami
     let row_height = height / sum_rows;
     let col_width = width / sum_cols;
 
+    let mut x = 0;
+    let mut y = 0;
+
     for i in 0..rows.len() {
-        let y = if i == 0 {
+        y = if i == 0 {
             0
         } else {
-            i as u32 + row_height * rows[i - 1]
+            y + row_height * rows[i - 1]
         };
 
         let crop_height = if i == rows.len() - 1 {
@@ -138,10 +141,10 @@ fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<Dynami
         };
 
         for j in 0..cols.len() {
-            let x = if j == 0 {
+            x = if j == 0 {
                 0
             } else {
-                j as u32 + col_width * cols[j - 1]
+                x as u32 + col_width * cols[j - 1]
             };
 
             let crop_width = if j == cols.len() - 1 {
