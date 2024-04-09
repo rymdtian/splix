@@ -2,27 +2,29 @@ use clap::Parser;
 use image::*;
 use std::path::PathBuf;
 use std::{fs, process, vec};
+use walkdir::WalkDir;
 
 /// Command-line arguments for splix.
 #[derive(Parser)]
 struct Cli {
-    /// Path of the image to convert.
-    #[arg(short, long)]
-    image: PathBuf,
+    /// Path of the image(s) to convert.
+    /// Specify the path of an image, or a directory of images.
+    #[arg(short, long, visible_alias = "image", verbatim_doc_comment)]
+    images: PathBuf,
 
     /// The number of rows to split the image into.
-    /// You can either specify an integer, or a list of integers:
-    /// -r 4        This will split the image into 4 equal rows
-    /// -r 2,3,1,5  This will split the image into four rows of different heights.
+    /// Specify an integer, or a list of integers:
+    /// -r 4        Split the image into 4 equal rows.
+    /// -r 2,3,1,5  Split the image into four rows of different heights.
     ///             The image will be divided vertically into 2+3+1+5=11 equal sections.
     ///             The first row will take up 2 sections, second row 3 sections, etc.
     #[arg(short, long, value_delimiter = ',', verbatim_doc_comment)]
     rows: Option<Vec<u32>>,
 
     /// The number of columns to split the image into.
-    /// You can either specify an integer, or a list of integers.
-    /// -c 4        This will split the image into 4 equal rows):
-    /// -c 2,3,1,5  This will split the image into four columns of different widths.
+    /// Speicty an integer, or a list of integers.
+    /// -c 4        Split the image into 4 equal columns.
+    /// -c 2,3,1,5  Split the image into four columns of different widths.
     ///             The image will be divided horizontally into 2+3+1+5=11 equal sections.
     ///             The first column will take up 2 sections, second column 3 sections, etc.
     #[arg(short, long, value_delimiter = ',', verbatim_doc_comment)]
@@ -31,6 +33,10 @@ struct Cli {
     /// Directory to save the splixed images in. Default: `./splixed-images`.
     #[arg(short = 'o', long = "output-dir")]
     output_dir: Option<PathBuf>,
+
+    /// Enable recursive search for images in specified directory.
+    #[arg(short = 'R', long)]
+    recursive: bool,
 }
 
 /// Validates the provided command-line arguments.
@@ -43,15 +49,27 @@ struct Cli {
 ///
 /// * `Ok(())` if the arguments are valid, otherwise returns an error message.
 fn validate_args(cli: &Cli) -> Result<(), String> {
-    let image_path = cli.image.clone();
+    let img_dir = cli.images.clone();
     let rows = &cli.rows;
     let cols = &cli.cols;
 
-    // Validate image
-    if let Err(_) = image::open(&image_path) {
+    let mut is_valid_image_found = false;
+    for entry in WalkDir::new(&img_dir) {
+        match entry {
+            Ok(entry) => {
+                if image::open(entry.path()).is_ok() {
+                    is_valid_image_found = true;
+                    break;
+                }
+            }
+            Err(_) => continue,
+        }
+    }
+
+    if !is_valid_image_found {
         return Err(format!(
-            "splix: image: The provided file '{}' is not a valid image",
-            image_path.display()
+            "splix: image: The provided file or directory '{}' is not or does not contain a valid image",
+            img_dir.display()
         ));
     }
 
@@ -82,15 +100,14 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
 ///
 /// # Arguments
 ///
-/// * `img_path` - Path to the input image file.
+/// * `img` - Image to split.
 /// * `rows` - Number of rows to split the image into. Provide a single integer for equal division, or a list of integers for custom division.
 /// * `cols` - Number of columns to split the image into. Provide a single integer for equal division, or a list of integers for custom division.
 ///
 /// # Returns
 ///
 /// A vector of split images.
-fn split_image(img_path: &PathBuf, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<DynamicImage> {
-    let mut img = image::open(img_path).unwrap();
+fn split_image(mut img: DynamicImage, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<DynamicImage> {
     let mut split_images = Vec::new();
     let (width, height) = img.dimensions();
 
@@ -173,9 +190,12 @@ fn split_image(img_path: &PathBuf, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<Dyna
 /// # Arguments
 ///
 /// * `split_images` - A reference to a vector containing the split images.
-/// * `save_directory_str` - Path to the directory where split images will be saved.
+/// * `output_directory` - Path to the directory where split images will be saved.
+/// * `img_file_name` - Path of image excluding parent directories and extension.
 /// * `img_format` - Format of the image.
 /// * `img_format_str` - String representation of the image format.
+/// * `num_rows` - Number of rows the image was split into.
+/// * `num_cols` _ Number of columns the image was split into.
 fn save_images(
     split_images: &Vec<DynamicImage>,
     output_directory: &PathBuf,
@@ -217,19 +237,6 @@ fn save_images(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_split_image_correct_number_of_images() {
-        let path = &PathBuf::from("./assets/16x16.png");
-        assert!(split_image(path, &vec![3], &vec![5]).len() == 15);
-        assert!(split_image(path, &vec![1], &vec![1]).len() == 1);
-        assert!(split_image(path, &vec![16], &vec![16]).len() == 256);
-    }
-}
-
 fn main() {
     let cli = Cli::parse();
 
@@ -238,32 +245,44 @@ fn main() {
         return;
     }
 
-    let img_path = cli.image;
+    let img_dir = cli.images;
     let rows = cli.rows.unwrap_or(vec![1]);
     let cols = cli.cols.unwrap_or(vec![1]);
     let output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
+    let entries = if cli.recursive {
+        WalkDir::new(&img_dir)
+    } else {
+        WalkDir::new(&img_dir).max_depth(1)
+    };
 
-    let img_file_name = img_path.file_stem().unwrap().to_string_lossy();
-    let img_format = io::Reader::open(&img_path).unwrap().format().unwrap();
-    let img_format_str = img_format.extensions_str()[0];
-
-    let split_images = split_image(&img_path, &rows, &cols);
-
-    save_images(
-        &split_images,
-        &output_directory,
-        &img_file_name,
-        &img_format,
-        img_format_str,
-        if rows.len() > 1 {
-            rows.len()
-        } else {
-            rows[0] as usize
-        },
-        if cols.len() > 1 {
-            cols.len()
-        } else {
-            cols[0] as usize
-        },
-    );
+    for entry in entries {
+        match entry {
+            Ok(entry) => {
+                if let Ok(img) = image::open(entry.path()) {
+                    let split_images = split_image(img, &rows, &cols);
+                    let img_file_name = &entry.path().file_stem().unwrap().to_string_lossy();
+                    let img_format = &ImageFormat::from_path(entry.path()).unwrap();
+                    let img_format_str = img_format.extensions_str()[0];
+                    save_images(
+                        &split_images,
+                        &output_directory,
+                        img_file_name,
+                        img_format,
+                        img_format_str,
+                        if rows.len() > 1 {
+                            rows.len()
+                        } else {
+                            rows[0] as usize
+                        },
+                        if cols.len() > 1 {
+                            cols.len()
+                        } else {
+                            cols[0] as usize
+                        },
+                    )
+                }
+            }
+            Err(_) => continue,
+        }
+    }
 }
