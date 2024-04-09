@@ -1,7 +1,8 @@
 use clap::Parser;
 use image::*;
+use rayon::prelude::*;
 use std::path::PathBuf;
-use std::{fs, cmp, vec};
+use std::{cmp, fs, vec};
 use walkdir::WalkDir;
 
 /// Command-line arguments for splix.
@@ -168,11 +169,10 @@ fn split_image(mut img: DynamicImage, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<D
 /// * `num_cols` _ Number of columns the image was split into.
 fn save_images(
     split_images: &Vec<DynamicImage>,
-    output_directory: &mut PathBuf,
+    output_directory: PathBuf,
     img_file_name: &str,
     img_format: &ImageFormat,
     img_format_str: &str,
-    num_rows: usize,
     num_cols: usize,
 ) {
     if !output_directory.exists() {
@@ -184,30 +184,39 @@ fn save_images(
             );
         }
     }
+
+    let mut output_directory = output_directory;
     output_directory.push("placeholder");
 
-    for i in 0..num_rows {
-        for j in 0..num_cols {
-            output_directory
-                .set_file_name(format!("{}-r{}c{}.{}", img_file_name, i, j, img_format_str));
-            if output_directory.exists() {
-                if let Err(err) = fs::remove_file(&output_directory) {
-                    eprintln!("Failed to remove existing image {}: {}", i, err);
-                    continue; // Skip saving this image if removing the existing one fails
-                }
-            }
+    split_images.par_iter().enumerate().for_each(|(i, image)| {
+        let mut file_path = output_directory.clone();
+        file_path.set_file_name(format!(
+            "{}-r{}c{}.{}",
+            img_file_name,
+            i / num_cols,
+            i % num_cols,
+            img_format_str
+        ));
 
-            if i * num_cols + j >= split_images.len() {
-                break;
-            }
-
-            if let Err(err) =
-                split_images[i * num_cols + j].save_with_format(&output_directory, *img_format)
-            {
-                eprintln!("splix: Failed to save image #{}: {}", i, err);
+        if file_path.exists() {
+            if let Err(err) = fs::remove_file(&file_path) {
+                eprintln!(
+                    "Failed to remove existing image {}: {}",
+                    file_path.file_stem().unwrap().to_string_lossy(),
+                    err
+                );
+                return;
             }
         }
-    }
+
+        if let Err(err) = image.save_with_format(&file_path, *img_format) {
+            eprintln!(
+                "splix: Failed to save image {}: {}",
+                file_path.file_stem().unwrap().to_string_lossy(),
+                err
+            );
+        }
+    });
 }
 
 fn main() {
@@ -221,41 +230,32 @@ fn main() {
     let img_dir = cli.images;
     let rows = cli.rows.unwrap_or(vec![1]);
     let cols = cli.cols.unwrap_or(vec![1]);
-    let mut output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
-    let entries = if cli.recursive {
-        WalkDir::new(&img_dir)
-    } else {
-        WalkDir::new(&img_dir).max_depth(1)
-    };
+    let output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
 
-    for entry in entries {
-        match entry {
-            Ok(entry) => {
-                if let Ok(img) = image::open(entry.path()) {
-                    let split_images = split_image(img, &rows, &cols);
-                    let img_file_name = &entry.path().file_stem().unwrap().to_string_lossy();
-                    let img_format = &ImageFormat::from_path(entry.path()).unwrap();
-                    let img_format_str = img_format.extensions_str()[0];
-                    save_images(
-                        &split_images,
-                        &mut output_directory,
-                        img_file_name,
-                        img_format,
-                        img_format_str,
-                        if rows.len() > 1 {
-                            rows.len()
-                        } else {
-                            rows[0] as usize
-                        },
-                        if cols.len() > 1 {
-                            cols.len()
-                        } else {
-                            cols[0] as usize
-                        },
-                    )
-                }
+    WalkDir::new(&img_dir)
+        .max_depth(if cli.recursive { usize::MAX } else { 1 })
+        .into_iter()
+        .par_bridge()
+        .filter_map(|entry| entry.ok().filter(|entry| entry.path().is_file()))
+        .for_each(|entry| {
+            if let Ok(img) = image::open(entry.path()) {
+                let split_images = split_image(img, &rows, &cols);
+                let img_file_name = &entry.path().file_stem().unwrap().to_string_lossy();
+                let img_format = &ImageFormat::from_path(entry.path()).unwrap();
+                let img_format_str = img_format.extensions_str()[0];
+
+                save_images(
+                    &split_images,
+                    output_directory.clone(),
+                    img_file_name,
+                    img_format,
+                    img_format_str,
+                    if cols.len() > 1 {
+                        cols.len()
+                    } else {
+                        cols[0] as usize
+                    },
+                );
             }
-            Err(_) => continue,
-        }
-    }
+        });
 }
