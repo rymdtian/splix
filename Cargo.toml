@@ -1,6 +1,6 @@
 [package]
 name = "splix"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Raymond Tian rymdtian@gmail.com"]
 license = "MIT"
