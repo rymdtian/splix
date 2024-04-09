@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn test_split_image_correct_number_of_images() {
-        let path = &PathBuf::from("./test_assets/16x16.png");
+        let path = &PathBuf::from("./assets/16x16.png");
         assert!(split_image(path, 3, 5).len() == 15);
         assert!(split_image(path, 1, 1).len() == 1);
         assert!(split_image(path, 16, 16).len() == 256);
