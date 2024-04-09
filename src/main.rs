@@ -100,7 +100,7 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
 ///
 /// # Arguments
 ///
-/// * `img_path` - Path to the input image file.
+/// * `img` - Image to split.
 /// * `rows` - Number of rows to split the image into. Provide a single integer for equal division, or a list of integers for custom division.
 /// * `cols` - Number of columns to split the image into. Provide a single integer for equal division, or a list of integers for custom division.
 ///
@@ -190,9 +190,12 @@ fn split_image(mut img: DynamicImage, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<D
 /// # Arguments
 ///
 /// * `split_images` - A reference to a vector containing the split images.
-/// * `save_directory_str` - Path to the directory where split images will be saved.
+/// * `output_directory` - Path to the directory where split images will be saved.
+/// * `img_file_name` - Path of image excluding parent directories and extension.
 /// * `img_format` - Format of the image.
 /// * `img_format_str` - String representation of the image format.
+/// * `num_rows` - Number of rows the image was split into.
+/// * `num_cols` _ Number of columns the image was split into.
 fn save_images(
     split_images: &Vec<DynamicImage>,
     output_directory: &PathBuf,
