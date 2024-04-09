@@ -3,6 +3,7 @@ use image::*;
 use std::path::PathBuf;
 use std::{fs, vec};
 
+// TODO: update docs
 /// Command-line arguments for splix.
 #[derive(Parser)]
 struct Cli {
@@ -42,7 +43,23 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
     }
 
     if rows.is_none() && cols.is_none() {
-        return Err("splix: At least one of '--rows', '--cols' needs to be specified.".to_string());
+        return Err("splix: At least one of '--rows', '--cols' needs to be specified".to_string());
+    }
+
+    if let Some(rows) = rows {
+        for row_val in rows {
+            if *row_val == 0 {
+                return Err("splix: rows: Row size(s) must be greater than zero".to_string());
+            }
+        }
+    }
+
+    if let Some(cols) = cols {
+        for col_val in cols {
+            if *col_val == 0 {
+                return Err("splix: cols: Column size(s) must be greater than zero".to_string());
+            }
+        }
     }
 
     Ok(())
