@@ -162,7 +162,6 @@ fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<Dynami
         }
     }
 
-    println!("{}", split_images.len());
     split_images
 }
 
