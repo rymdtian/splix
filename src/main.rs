@@ -179,6 +179,7 @@ fn split_image(img_path: &PathBuf, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<Dyna
 fn save_images(
     split_images: &Vec<DynamicImage>,
     output_directory: &PathBuf,
+    img_file_name: &str,
     img_format: &ImageFormat,
     img_format_str: &str,
     num_rows: usize,
@@ -194,11 +195,12 @@ fn save_images(
             );
         }
     }
-    output_directory.push("placeholder_filename");
+    output_directory.push("placeholder");
 
     for i in 0..num_rows {
         for j in 0..num_cols {
-            output_directory.set_file_name(format!("r{}c{}.{}", i, j, img_format_str));
+            output_directory
+                .set_file_name(format!("{}-r{}c{}.{}", img_file_name, i, j, img_format_str));
             if output_directory.exists() {
                 if let Err(err) = fs::remove_file(&output_directory) {
                     eprintln!("Failed to remove existing image {}: {}", i, err);
@@ -241,12 +243,16 @@ fn main() {
     let cols = cli.cols.unwrap_or(vec![1]);
     let output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
 
-    let split_images = split_image(&img_path, &rows, &cols);
+    let img_file_name = img_path.file_stem().unwrap().to_string_lossy();
     let img_format = io::Reader::open(&img_path).unwrap().format().unwrap();
     let img_format_str = img_format.extensions_str()[0];
+
+    let split_images = split_image(&img_path, &rows, &cols);
+
     save_images(
         &split_images,
         &output_directory,
+        &img_file_name,
         &img_format,
         img_format_str,
         if rows.len() > 1 {
