@@ -89,13 +89,16 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
 /// # Returns
 ///
 /// A vector of split images.
-fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<DynamicImage> {
+fn split_image(img_path: &PathBuf, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<DynamicImage> {
     let mut img = image::open(img_path).unwrap();
     let mut split_images = Vec::new();
     let (width, height) = img.dimensions();
 
     let sum_rows: u32 = rows.iter().sum();
     let sum_cols: u32 = cols.iter().sum();
+
+    let rows = rows.clone();
+    let cols = cols.clone();
 
     if sum_rows > height {
         eprintln!(
@@ -178,6 +181,8 @@ fn save_images(
     output_directory: &PathBuf,
     img_format: &ImageFormat,
     img_format_str: &str,
+    num_rows: usize,
+    num_cols: usize,
 ) {
     let mut output_directory = output_directory.clone();
     if !output_directory.exists() {
@@ -191,18 +196,21 @@ fn save_images(
     }
     output_directory.push("placeholder_filename");
 
-    for i in 0..split_images.len() {
-        output_directory.set_file_name(format!("{}.{}", i, img_format_str));
-
-        if output_directory.exists() {
-            if let Err(err) = fs::remove_file(&output_directory) {
-                eprintln!("Failed to remove existing image {}: {}", i, err);
-                continue; // Skip saving this image if removing the existing one fails
+    for i in 0..num_rows {
+        for j in 0..num_cols {
+            output_directory.set_file_name(format!("r{}c{}.{}", i, j, img_format_str));
+            if output_directory.exists() {
+                if let Err(err) = fs::remove_file(&output_directory) {
+                    eprintln!("Failed to remove existing image {}: {}", i, err);
+                    continue; // Skip saving this image if removing the existing one fails
+                }
             }
-        }
 
-        if let Err(err) = split_images[i].save_with_format(&output_directory, *img_format) {
-            eprintln!("splix: Failed to save image #{}: {}", i, err);
+            if let Err(err) =
+                split_images[i * num_cols + j].save_with_format(&output_directory, *img_format)
+            {
+                eprintln!("splix: Failed to save image #{}: {}", i, err);
+            }
         }
     }
 }
@@ -214,9 +222,9 @@ mod tests {
     #[test]
     fn test_split_image_correct_number_of_images() {
         let path = &PathBuf::from("./assets/16x16.png");
-        assert!(split_image(path, vec![3], vec![5]).len() == 15);
-        assert!(split_image(path, vec![1], vec![1]).len() == 1);
-        assert!(split_image(path, vec![16], vec![16]).len() == 256);
+        assert!(split_image(path, &vec![3], &vec![5]).len() == 15);
+        assert!(split_image(path, &vec![1], &vec![1]).len() == 1);
+        assert!(split_image(path, &vec![16], &vec![16]).len() == 256);
     }
 }
 
@@ -233,7 +241,7 @@ fn main() {
     let cols = cli.cols.unwrap_or(vec![1]);
     let output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
 
-    let split_images = split_image(&img_path, rows, cols);
+    let split_images = split_image(&img_path, &rows, &cols);
     let img_format = io::Reader::open(&img_path).unwrap().format().unwrap();
     let img_format_str = img_format.extensions_str()[0];
     save_images(
@@ -241,5 +249,15 @@ fn main() {
         &output_directory,
         &img_format,
         img_format_str,
+        if rows.len() > 1 {
+            rows.len()
+        } else {
+            rows[0] as usize
+        },
+        if cols.len() > 1 {
+            cols.len()
+        } else {
+            cols[0] as usize
+        },
     );
 }
