@@ -3,7 +3,6 @@ use image::*;
 use std::path::PathBuf;
 use std::{fs, vec};
 
-// TODO: update docs
 /// Command-line arguments for splix.
 #[derive(Parser)]
 struct Cli {
