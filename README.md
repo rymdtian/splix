@@ -5,7 +5,16 @@ Splix is a command-line tool written in Rust for splitting images into multiple 
 ## Disclaimer
 first time writing Rust so code might be terrible
 
-## Options
+## Installation
+Mac:
+```shell
+brew tap raymondytian/splix
+brew install splix
+```
+Other:
+[Download release](https://github.com/raymondytian/splix/releases/)
+
+## Usage
 ```plaintext
 Usage: splix [OPTIONS] --images <IMAGES>
 
