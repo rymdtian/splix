@@ -127,7 +127,7 @@ fn split_image(mut img: DynamicImage, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<D
 
     if sum_cols > width {
         eprintln!(
-            "splix: cols: The sum of provided columns ({}) exceedsd image width ({})",
+            "splix: cols: The sum of provided columns ({}) exceeds image width ({})",
             sum_cols, width
         );
         process::exit(1);
