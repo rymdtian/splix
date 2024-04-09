@@ -1,7 +1,7 @@
 use clap::Parser;
 use image::*;
-use std::fs;
 use std::path::PathBuf;
+use std::{fs, vec};
 
 /// Command-line arguments for splix.
 #[derive(Parser)]
@@ -11,12 +11,12 @@ struct Cli {
     image: PathBuf,
 
     /// Number of rows to split the image into.
-    #[arg(short, long)]
-    rows: Option<u32>,
+    #[arg(short, long, value_delimiter = ',')]
+    rows: Option<Vec<u32>>,
 
     /// Number of columns to split the image into.
-    #[arg(short, long)]
-    cols: Option<u32>,
+    #[arg(short, long, value_delimiter = ',')]
+    cols: Option<Vec<u32>>,
 }
 
 /// Validates the provided command-line arguments.
@@ -30,8 +30,8 @@ struct Cli {
 /// * `Ok(())` if the arguments are valid, otherwise returns an error message.
 fn validate_args(cli: &Cli) -> Result<(), String> {
     let image_path = cli.image.clone();
-    let rows = cli.rows;
-    let cols = cli.cols;
+    let rows = &cli.rows;
+    let cols = &cli.cols;
 
     // Validate image
     if let Err(_) = image::open(&image_path) {
@@ -59,10 +59,13 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
 /// # Returns
 ///
 /// A vector of split images.
-fn split_image(img_path: &PathBuf, rows: u32, cols: u32) -> Vec<DynamicImage> {
+fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<DynamicImage> {
     let mut img = image::open(img_path).unwrap();
     let mut split_images = Vec::new();
     let (width, height) = img.dimensions();
+
+    let rows = rows[0];
+    let cols = cols[0];
 
     let rows = rows.clamp(1, height);
     let cols = cols.clamp(1, width);
@@ -136,10 +139,10 @@ mod tests {
     #[test]
     fn test_split_image_correct_number_of_images() {
         let path = &PathBuf::from("./assets/16x16.png");
-        assert!(split_image(path, 3, 5).len() == 15);
-        assert!(split_image(path, 1, 1).len() == 1);
-        assert!(split_image(path, 16, 16).len() == 256);
-        assert!(split_image(path, 17, 17).len() == 256);
+        assert!(split_image(path, vec![3], vec![5]).len() == 15);
+        assert!(split_image(path, vec![0], vec![0]).len() == 1);
+        assert!(split_image(path, vec![16], vec![16]).len() == 256);
+        assert!(split_image(path, vec![17], vec![17]).len() == 256);
     }
 }
 
@@ -152,8 +155,8 @@ fn main() {
     }
 
     let img_path = cli.image;
-    let rows = cli.rows.unwrap_or(1);
-    let cols = cli.cols.unwrap_or(1);
+    let rows = cli.rows.unwrap_or(vec![1]);
+    let cols = cli.cols.unwrap_or(vec![1]);
     let save_directory = "split_images"; // TODO: turn to user argument
 
     let split_images = split_image(&img_path, rows, cols);
