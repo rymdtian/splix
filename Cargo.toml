@@ -1,10 +1,10 @@
 [package]
 name = "splix"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Raymond Tian rymdtian@gmail.com"]
 license = "MIT"
-description = "Superfast image splitter."
+description = "Lightning-fast image splitter."
 readme = "README.md"
 homepage = "https://github.com/raymondytian/splix"
 repository = "https://github.com/raymondytian/splix"
