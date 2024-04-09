@@ -11,12 +11,22 @@ struct Cli {
     #[arg(short, long)]
     image: PathBuf,
 
-    /// Number of rows to split the image into.
-    #[arg(short, long, value_delimiter = ',')]
+    /// The number of rows to split the image into.
+    /// You can either specify an integer, or a list of integers:
+    /// -r 4        This will split the image into 4 equal rows
+    /// -r 2,3,1,5  This will split the image into four rows of different heights.
+    ///             The image will be divided vertically into 2+3+1+5=11 equal sections.
+    ///             The first row will take up 2 sections, second row 3 sections, etc.
+    #[arg(short, long, value_delimiter = ',', verbatim_doc_comment)]
     rows: Option<Vec<u32>>,
 
-    /// Number of columns to split the image into.
-    #[arg(short, long, value_delimiter = ',')]
+    /// The number of columns to split the image into.
+    /// You can either specify an integer, or a list of integers.
+    /// -c 4        This will split the image into 4 equal rows):
+    /// -c 2,3,1,5  This will split the image into four columns of different widths.
+    ///             The image will be divided horizontally into 2+3+1+5=11 equal sections.
+    ///             The first column will take up 2 sections, second column 3 sections, etc.
+    #[arg(short, long, value_delimiter = ',', verbatim_doc_comment)]
     cols: Option<Vec<u32>>,
 }
 
@@ -65,13 +75,13 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
     Ok(())
 }
 
-/// Splits the input image into specified number of rows and columns.
+/// Splits the input image into the specified number of rows and columns.
 ///
 /// # Arguments
 ///
 /// * `img_path` - Path to the input image file.
-/// * `rows` - Number of rows to split the image into.
-/// * `cols` - Number of columns to split the image into.
+/// * `rows` - Number of rows to split the image into. Provide a single integer for equal division, or a list of integers for custom division.
+/// * `cols` - Number of columns to split the image into. Provide a single integer for equal division, or a list of integers for custom division.
 ///
 /// # Returns
 ///
