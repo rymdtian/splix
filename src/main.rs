@@ -33,6 +33,10 @@ struct Cli {
     /// Directory to save the splixed images in. Default: `./splixed-images`.
     #[arg(short = 'o', long = "output-dir")]
     output_dir: Option<PathBuf>,
+
+    /// Enable recursive search for images in specified directory.
+    #[arg(short = 'R', long)]
+    recursive: bool,
 }
 
 /// Validates the provided command-line arguments.
@@ -242,8 +246,13 @@ fn main() {
     let rows = cli.rows.unwrap_or(vec![1]);
     let cols = cli.cols.unwrap_or(vec![1]);
     let output_directory = cli.output_dir.unwrap_or(PathBuf::from("splixed-images"));
+    let entries = if cli.recursive {
+        WalkDir::new(&img_dir)
+    } else {
+        WalkDir::new(&img_dir).max_depth(1)
+    };
 
-    for entry in WalkDir::new(&img_dir) {
+    for entry in entries {
         match entry {
             Ok(entry) => {
                 if let Ok(img) = image::open(entry.path()) {
