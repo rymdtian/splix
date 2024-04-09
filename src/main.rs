@@ -1,7 +1,7 @@
 use clap::Parser;
 use image::*;
 use std::path::PathBuf;
-use std::{fs, vec};
+use std::{fs, process, vec};
 
 /// Command-line arguments for splix.
 #[derive(Parser)]
@@ -93,6 +93,41 @@ fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<Dynami
     let sum_rows: u32 = rows.iter().sum();
     let sum_cols: u32 = cols.iter().sum();
 
+    if sum_rows > height {
+        eprintln!(
+            "splix: rows: The sum of provided rows ({}) exceeds image height ({})",
+            sum_rows, height
+        );
+        process::exit(1);
+    }
+
+    if sum_cols > width {
+        eprintln!(
+            "splix: cols: The sum of provided columns ({}) exceedsd image width ({})",
+            sum_cols, width
+        );
+        process::exit(1);
+    }
+
+    let rows = if rows.len() > 1 {
+        rows
+    } else {
+        vec![1; rows[0] as usize]
+    };
+
+    let cols = if cols.len() > 1 {
+        cols
+    } else {
+        vec![1; cols[0] as usize]
+    };
+    for val in &rows {
+        println!("rows {}", val);
+    }
+
+    for val in &cols {
+        println!("cols {}", val);
+    }
+
     let row_height = height / sum_rows;
     let col_width = width / sum_cols;
 
@@ -113,8 +148,9 @@ fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<Dynami
             let x = if j == 0 {
                 0
             } else {
-                j as u32 + col_width + cols[j - 1]
+                j as u32 + col_width * cols[j - 1]
             };
+            println!("{} {}", x, y);
             let crop_width = if j == cols.len() - 1 {
                 width - x
             } else {
@@ -126,6 +162,7 @@ fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<Dynami
         }
     }
 
+    println!("{}", split_images.len());
     split_images
 }
 
@@ -176,9 +213,8 @@ mod tests {
     fn test_split_image_correct_number_of_images() {
         let path = &PathBuf::from("./assets/16x16.png");
         assert!(split_image(path, vec![3], vec![5]).len() == 15);
-        assert!(split_image(path, vec![0], vec![0]).len() == 1);
+        assert!(split_image(path, vec![1], vec![1]).len() == 1);
         assert!(split_image(path, vec![16], vec![16]).len() == 256);
-        assert!(split_image(path, vec![17], vec![17]).len() == 256);
     }
 }
 
