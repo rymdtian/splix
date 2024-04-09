@@ -49,28 +49,18 @@ struct Cli {
 ///
 /// * `Ok(())` if the arguments are valid, otherwise returns an error message.
 fn validate_args(cli: &Cli) -> Result<(), String> {
-    let img_dir = cli.images.clone();
-    let rows = &cli.rows;
-    let cols = &cli.cols;
+    let img_dir = &cli.images;
+    let rows = cli.rows.as_ref();
+    let cols = cli.cols.as_ref();
 
-    let mut is_valid_image_found = false;
-    for entry in WalkDir::new(&img_dir) {
-        match entry {
-            Ok(entry) => {
-                if image::open(entry.path()).is_ok() {
-                    is_valid_image_found = true;
-                    break;
-                }
-            }
-            Err(_) => continue,
+    match img_dir.try_exists() {
+        Ok(true) => {}
+        Ok(false) | Err(_) => {
+            return Err(format!(
+                "splix: image: The provided path '{}' does not exist",
+                img_dir.display()
+            ))
         }
-    }
-
-    if !is_valid_image_found {
-        return Err(format!(
-            "splix: image: The provided file or directory '{}' is not or does not contain a valid image",
-            img_dir.display()
-        ));
     }
 
     if rows.is_none() && cols.is_none() {
@@ -78,18 +68,14 @@ fn validate_args(cli: &Cli) -> Result<(), String> {
     }
 
     if let Some(rows) = rows {
-        for row_val in rows {
-            if *row_val == 0 {
-                return Err("splix: rows: Row size(s) must be greater than zero".to_string());
-            }
+        if rows.iter().any(|&row_val| row_val == 0) {
+            return Err("splix: rows: All row sizes must be greater than zero".to_string());
         }
     }
 
     if let Some(cols) = cols {
-        for col_val in cols {
-            if *col_val == 0 {
-                return Err("splix: cols: Column size(s) must be greater than zero".to_string());
-            }
+        if cols.iter().any(|&col_val| col_val == 0) {
+            return Err("splix: cols: All column sizes must be greater than zero".to_string());
         }
     }
 
