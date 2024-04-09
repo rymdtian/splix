@@ -197,6 +197,10 @@ fn save_images(
                 }
             }
 
+            if i * num_cols + j >= split_images.len() {
+                break;
+            }
+
             if let Err(err) =
                 split_images[i * num_cols + j].save_with_format(&output_directory, *img_format)
             {
