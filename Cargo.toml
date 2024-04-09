@@ -1,14 +1,13 @@
 [package]
 name = "splix"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Raymond Tian rymdtian@gmail.com"]
 license = "MIT"
-description = "Split images into grids of rows and columns."
+description = "Superfast image splitter."
 readme = "README.md"
 homepage = "https://github.com/raymondytian/splix"
 repository = "https://github.com/raymondytian/splix"
-keywords = ["cli", "image", "split"]
 categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
