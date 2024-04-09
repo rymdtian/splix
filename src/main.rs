@@ -11,18 +11,18 @@ struct Cli {
     image: PathBuf,
 
     /// The number of rows to split the image into.
-    /// You can either specify an integer, or a list of integers:
-    /// -r 4        This will split the image into 4 equal rows
-    /// -r 2,3,1,5  This will split the image into four rows of different heights.
+    /// Specify an integer, or a list of integers:
+    /// -r 4        Split the image into 4 equal rows.
+    /// -r 2,3,1,5  Split the image into four rows of different heights.
     ///             The image will be divided vertically into 2+3+1+5=11 equal sections.
     ///             The first row will take up 2 sections, second row 3 sections, etc.
     #[arg(short, long, value_delimiter = ',', verbatim_doc_comment)]
     rows: Option<Vec<u32>>,
 
     /// The number of columns to split the image into.
-    /// You can either specify an integer, or a list of integers.
-    /// -c 4        This will split the image into 4 equal rows):
-    /// -c 2,3,1,5  This will split the image into four columns of different widths.
+    /// Speicty an integer, or a list of integers.
+    /// -c 4        Split the image into 4 equal columns.
+    /// -c 2,3,1,5  Split the image into four columns of different widths.
     ///             The image will be divided horizontally into 2+3+1+5=11 equal sections.
     ///             The first column will take up 2 sections, second column 3 sections, etc.
     #[arg(short, long, value_delimiter = ',', verbatim_doc_comment)]
