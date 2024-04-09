@@ -81,26 +81,36 @@ fn split_image(img_path: &PathBuf, rows: Vec<u32>, cols: Vec<u32>) -> Vec<Dynami
     let mut split_images = Vec::new();
     let (width, height) = img.dimensions();
 
-    let rows = rows[0];
-    let cols = cols[0];
+    let sum_rows: u32 = rows.iter().sum();
+    let sum_cols: u32 = cols.iter().sum();
 
-    let rows = rows.clamp(1, height);
-    let cols = cols.clamp(1, width);
+    let row_height = height / sum_rows;
+    let col_width = width / sum_cols;
 
-    let row_height = height / rows;
-    let col_width = width / cols;
-
-    for i in 0..rows {
-        let y = row_height * i;
-        let crop_height = if i == rows - 1 {
-            height - y
+    for i in 0..rows.len() {
+        let y = if i == 0 {
+            0
         } else {
-            row_height
+            i as u32 + row_height * rows[i - 1]
         };
 
-        for j in 0..cols {
-            let x = col_width * j;
-            let crop_width = if j == cols - 1 { width - x } else { col_width };
+        let crop_height = if i == rows.len() - 1 {
+            height - y
+        } else {
+            row_height * rows[i]
+        };
+
+        for j in 0..cols.len() {
+            let x = if j == 0 {
+                0
+            } else {
+                j as u32 + col_width + cols[j - 1]
+            };
+            let crop_width = if j == cols.len() - 1 {
+                width - x
+            } else {
+                col_width * cols[j]
+            };
 
             let sub_img = img.crop(x, y, crop_width, crop_height);
             split_images.push(sub_img);
