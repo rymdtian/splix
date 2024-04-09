@@ -98,40 +98,24 @@ fn split_image(mut img: DynamicImage, rows: &Vec<u32>, cols: &Vec<u32>) -> Vec<D
     let sum_rows: u32 = rows.iter().sum();
     let sum_cols: u32 = cols.iter().sum();
 
-    if sum_rows > height {
-        eprintln!(
-            "splix: rows: The sum of provided rows ({}) exceeds image height ({})",
-            sum_rows, height
-        );
-        process::exit(1);
-    }
-
-    if sum_cols > width {
-        eprintln!(
-            "splix: cols: The sum of provided columns ({}) exceeds image width ({})",
-            sum_cols, width
-        );
-        process::exit(1);
-    }
-
     let single_rows: Vec<u32>;
-    let rows = if rows.len() > 1 {
+    let rows = if rows.len() > 1 && height >= sum_rows {
         rows
     } else {
-        single_rows = vec![1; rows[0] as usize];
+        single_rows = vec![1; cmp::min(height as usize, rows[0] as usize)];
         &single_rows
     };
 
     let single_cols: Vec<u32>;
-    let cols = if cols.len() > 1 {
+    let cols = if cols.len() > 1 && width >= sum_cols {
         cols
     } else {
-        single_cols = vec![1; cols[0] as usize];
+        single_cols = vec![1; cmp::min(width as usize, cols[0] as usize)];
         &single_cols
     };
 
-    let row_height = height / sum_rows;
-    let col_width = width / sum_cols;
+    let row_height = cmp::max(1, height / sum_rows);
+    let col_width = cmp::max(1, width / sum_cols);
 
     let mut split_images = Vec::new();
     let mut x = 0;
