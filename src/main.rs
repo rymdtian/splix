@@ -5,16 +5,18 @@ use std::path::PathBuf;
 use std::{cmp, fs, vec};
 use walkdir::WalkDir;
 
-/// Command-line arguments for splix.
+/// Lightning-fast image splitter.  
 #[derive(Parser)]
+#[clap(version)]
 struct Cli {
     /// Path of the image(s) to convert.
     /// Specify the path of an image, or a directory of images.
-    #[arg(short, long, visible_alias = "image", verbatim_doc_comment)]
+    #[arg(verbatim_doc_comment)]
     images: PathBuf,
 
     /// The number of rows to split the image into.
-    /// Specify an integer, or a list of integers:
+    /// Specify an integer, or a list of integers.
+    /// Ex:
     /// -r 4        Split the image into 4 equal rows.
     /// -r 2,3,1,5  Split the image into four rows of different heights.
     ///             The image will be divided vertically into 2+3+1+5=11 equal sections.
@@ -23,7 +25,8 @@ struct Cli {
     rows: Option<Vec<u32>>,
 
     /// The number of columns to split the image into.
-    /// Speicty an integer, or a list of integers.
+    /// Specity an integer, or a list of integers.
+    /// Ex:
     /// -c 4        Split the image into 4 equal columns.
     /// -c 2,3,1,5  Split the image into four columns of different widths.
     ///             The image will be divided horizontally into 2+3+1+5=11 equal sections.
@@ -31,11 +34,11 @@ struct Cli {
     #[arg(short, long, value_delimiter = ',', verbatim_doc_comment)]
     cols: Option<Vec<u32>>,
 
-    /// Directory to save the splixed images in. Default: `./splixed-images`.
-    #[arg(short = 'o', long = "output-dir")]
+    /// An optional directory to save the splixed images in. Default: `./splixed-images`.
+    #[arg(short = 'd', long = "output-dir")]
     output_dir: Option<PathBuf>,
 
-    /// Enable recursive search for images in specified directory.
+    /// An optional flag to enable recursive search for images in specified directory.
     #[arg(short = 'R', long)]
     recursive: bool,
 }
