@@ -188,18 +188,18 @@ fn save_images(
         }
     }
 
-    let mut output_directory = output_directory;
-    output_directory.push("placeholder");
+    let output_directory = output_directory;
 
     split_images.par_iter().enumerate().for_each(|(i, image)| {
-        let mut file_path = output_directory.clone();
-        file_path.set_file_name(format!(
+        let file_name = format!(
             "{}-r{}c{}.{}",
             img_file_name,
             i / num_cols,
             i % num_cols,
             img_format_str
-        ));
+        );
+
+        let file_path = &output_directory.join(file_name);
 
         if file_path.exists() {
             if let Err(err) = fs::remove_file(&file_path) {
